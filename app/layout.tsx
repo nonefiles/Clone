@@ -43,6 +43,10 @@ export default function RootLayout({
           href="https://sxyprrizapchoysutvfx.supabase.co"
           crossOrigin="anonymous"
         />
+        <link
+          rel="dns-prefetch"
+          href="https://sxyprrizapchoysutvfx.supabase.co"
+        />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider
