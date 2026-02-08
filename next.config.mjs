@@ -9,7 +9,11 @@ const nextConfig = {
     ],
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "@mantine/core"],
+    optimizePackageImports: [
+      "lucide-react",
+      "@mantine/core",
+      "@mantine/hooks",
+    ],
   },
 };
 
