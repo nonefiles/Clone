@@ -8,6 +8,9 @@ const nextConfig = {
       },
     ],
   },
+  experimental: {
+    optimizePackageImports: ["lucide-react", "@mantine/core"],
+  },
 };
 
 export default nextConfig;

@@ -14,6 +14,7 @@ export const Logo = () => {
         src="/logo.svg"
         height="40"
         width="40"
+        priority
         alt="logo"
         className="dark:hidden"
       />
@@ -21,6 +22,7 @@ export const Logo = () => {
         src="/logo-dark.svg"
         height="40"
         width="40"
+        priority
         alt="logo"
         className="hidden dark:block"
       />

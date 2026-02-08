@@ -8,12 +8,14 @@ export const Heroes = () => {
           <Image
             src="/idea.svg"
             fill
+            priority
             className="object-contain dark:hidden"
             alt="Idea"
           />
           <Image
             src="/idea-dark.svg"
             fill
+            priority
             className="hidden object-contain dark:block"
             alt="Idea"
           />
@@ -22,12 +24,14 @@ export const Heroes = () => {
           <Image
             src="/team.svg"
             fill
+            priority
             className="object-contain dark:hidden"
             alt="Team"
           />
           <Image
             src="/team-dark.svg"
             fill
+            priority
             className="hidden object-contain dark:block"
             alt="Team"
           />

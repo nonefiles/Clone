@@ -19,8 +19,8 @@ export const Heading = () => {
         happens.
       </h2>
       {loading && (
-        <div className="flex w-full items-center justify-center">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="flex w-full items-center justify-center py-[6px]">
+          <div className="h-10 w-40 animate-pulse rounded-md bg-muted" />
         </div>
       )}
       {user && !loading && (
