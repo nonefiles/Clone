@@ -22,12 +22,16 @@ export const Cover = ({ url, preview }: CoverImageProps) => {
   const onRemove = async () => {
     if (url) {
       try {
-        const path = url.split("/").pop();
+        // url.split('/images/')[1] mantığı ile tüm alt klasör yollarını (örneğin editor/...) ayıkla
+        const path = url.split("/images/")[1];
+        
         if (path) {
-          await supabase.storage.from("images").remove([path]);
+          // Storage'dan görseli sil
+          const { error } = await supabase.storage.from("images").remove([path]);
+          if (error) throw error;
         }
       } catch (error) {
-        console.error("Error removing image from storage:", error);
+        console.error("Storage delete error:", error);
       }
     }
 

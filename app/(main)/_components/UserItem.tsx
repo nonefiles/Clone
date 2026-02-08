@@ -30,7 +30,7 @@ export const UserItem = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
+      <DropdownMenuTrigger asChild>
         <div
           role="button"
           className="flex w-full items-center p-3 text-sm hover:bg-primary/5"
@@ -40,7 +40,7 @@ export const UserItem = () => {
               <AvatarImage src={user?.user_metadata?.avatar_url} />
             </Avatar>
             <span className="line-clamp-1 text-start font-medium">
-              {user?.email?.split("@")[0]}&apos;s Zotion
+              {user?.email?.split("@")[0]}&apos;s none-notion
             </span>
           </div>
           <ChevronsLeftRight className="ml-2 h-4 w-4 rotate-90 text-muted-foreground" />
@@ -64,7 +64,7 @@ export const UserItem = () => {
             </div>
             <div className="space-y-1">
               <p className="line-clamp-1 text-sm">
-                {user?.email?.split("@")[0]}&apos;s Zotion
+                {user?.email?.split("@")[0]}&apos;s none-notion
               </p>
             </div>
           </div>

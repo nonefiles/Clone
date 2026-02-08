@@ -61,8 +61,8 @@ export const SearchCommand = () => {
       }
     };
 
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
+    document.addEventListener("keydown", down, true);
+    return () => document.removeEventListener("keydown", down, true);
   }, [toggle]);
 
   const onSelect = (id: string) => {
@@ -77,7 +77,7 @@ export const SearchCommand = () => {
   return (
     <CommandDialog open={isOpen} onOpenChange={onClose}>
       <DialogTitle hidden>Search Documents</DialogTitle>
-      <CommandInput placeholder={`Search ${user?.user_metadata?.full_name || "your"}'s Zotion..`} />
+      <CommandInput placeholder={`Search ${user?.user_metadata?.full_name || "your"}'s none-notion..`} />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup heading="Documents">

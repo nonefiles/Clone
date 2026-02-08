@@ -5,7 +5,7 @@ import { Spinner } from "@/components/spinner";
 import { Input } from "@/components/ui/input";
 import { Search, Trash, Undo } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { Document } from "@/types";
@@ -19,7 +19,7 @@ export const TrashBox = () => {
   const [documents, setDocuments] = useState<Document[] | undefined>(undefined);
   const [search, setSearch] = useState("");
 
-  const fetchTrash = async () => {
+  const fetchTrash = useCallback(async () => {
     if (!user) return;
 
     const { data, error } = await supabase
@@ -32,11 +32,11 @@ export const TrashBox = () => {
     if (!error && data) {
       setDocuments(data as Document[]);
     }
-  };
+  }, [supabase, user]);
 
   useEffect(() => {
     fetchTrash();
-  }, [supabase, user]);
+  }, [fetchTrash]);
 
   const filteredDocuments = documents?.filter((document) => {
     return document.title.toLowerCase().includes(search.toLowerCase());
@@ -71,6 +71,21 @@ export const TrashBox = () => {
 
   const onRemove = async (documentId: string) => {
     const promise = (async () => {
+      // Önce döküman verisini alıp cover_image var mı kontrol edelim
+      const { data: document } = await supabase
+        .from("documents")
+        .select("cover_image")
+        .eq("id", documentId)
+        .single();
+
+      // Eğer cover_image varsa storage'dan sil
+      if (document?.cover_image) {
+        const path = document.cover_image.split("/images/")[1];
+        if (path) {
+          await supabase.storage.from("images").remove([path]);
+        }
+      }
+
       const { error } = await supabase
         .from("documents")
         .delete()

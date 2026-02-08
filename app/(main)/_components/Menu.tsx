@@ -26,58 +26,23 @@ export const Menu = ({ documentId }: MenuProps) => {
   const supabase = createClient();
   const { user } = useUser();
 
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: "Export PDF",
+  });
+
   const onExport = () => {
-    const editorElement = document.querySelector(".bn-container"); // Use container for better context
-    if (!editorElement) {
-      toast.error("Editor content not found");
+    const printableContent = document.getElementById("printable-content");
+    if (!printableContent) {
+      toast.error("Yazdırılacak içerik bulunamadı");
       return;
     }
-
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    // Get all computed styles or at least standard ones
-    const styles = Array.from(document.styleSheets)
-      .map(styleSheet => {
-        try {
-          return Array.from(styleSheet.cssRules)
-            .map(rule => rule.cssText)
-            .join("");
-        } catch (e) {
-          return "";
-        }
-      })
-      .join("");
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Export PDF</title>
-          <style>
-            ${styles}
-            body { font-family: sans-serif; padding: 40px; background: white !important; }
-            .bn-container { width: 100% !important; margin: 0 !important; }
-            @media print {
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body class="bg-white">
-          <div class="bn-container">
-            ${editorElement.innerHTML}
-          </div>
-          <script>
-            window.onload = () => {
-              setTimeout(() => {
-                window.print();
-                window.close();
-              }, 500);
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+    
+    // @ts-ignore
+    contentRef.current = printableContent;
+    handlePrint();
   };
 
   const onArchive = async () => {
@@ -88,7 +53,7 @@ export const Menu = ({ documentId }: MenuProps) => {
         .eq("id", documentId);
       
       if (error) throw error;
-      router.push("/documents");
+      router.push("/dashboard");
     })();
 
     toast.promise(promise, {

@@ -28,7 +28,7 @@ export const Navbar = () => {
                 <Link href="/login">Log In</Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href="/register">Get Zotion Free</Link>
+                <Link href="/register">Get none-notion Free</Link>
               </Button>
             </>
           )}
@@ -36,7 +36,7 @@ export const Navbar = () => {
           {user && !loading && (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/documents"> Enter Zotion </Link>
+                <Link href="/dashboard"> Enter none-notion </Link>
               </Button>
             </>
           )}

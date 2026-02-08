@@ -1,4 +1,4 @@
-# Zotion
+# none-notion
 
 This project is a simplified clone of the popular productivity application, Notion. It's designed to replicate some of the core features of Notion, providing a platform where users can create, edit, and organize their notes in a flexible and intuitive interface.
 
@@ -6,13 +6,14 @@ It uses Supabase as the backend, providing a real-time PostgreSQL database, secu
 
 ## Live
 
-Zotion - [https://zotion-app.vercel.app/](https://zotion-app.vercel.app/)
+none-notion - [https://none-notion-app.vercel.app/](https://zotion-app.vercel.app/)
 
 ## Features
 
 ### Productivity and Organization
 
-- 📝 Notion-style editor for seamless note-taking
+- 📝 Notion-style editor for seamless note-taking (with Mermaid diagrams support)
+- 📊 Kanban Board for project management and task tracking
 - 📂 Infinite children documents for hierarchical organization
 - 🖐️ Drag-and-drop reordering for intuitive file management
 - ➡️🔀⬅️ Expandable and fully collapsible sidebar for easy navigation
@@ -45,6 +46,7 @@ Zotion - [https://zotion-app.vercel.app/](https://zotion-app.vercel.app/)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC.svg?style=for-the-badge&logo=Tailwind-CSS&logoColor=white)
 ![Blocknote](https://img.shields.io/badge/Blocknote-ff8c00.svg?style=for-the-badge&logo=Blocknote&logoColor=white)
 ![dnd-kit](https://img.shields.io/badge/dnd--kit-000000?style=for-the-badge&logo=react&logoColor=white)
+![Mermaid](https://img.shields.io/badge/Mermaid-ff3e00.svg?style=for-the-badge&logo=Mermaid&logoColor=white)
 
 ## Installation
 

@@ -7,9 +7,13 @@ export async function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'your-supabase-url') {
+    throw new Error("Supabase credentials (URL/ANON_KEY) are missing or invalid in environment variables.");
+  }
+
   return createServerClient(
-    (supabaseUrl && supabaseUrl !== 'your-supabase-url') ? supabaseUrl : 'https://placeholder.supabase.co',
-    (supabaseAnonKey && supabaseAnonKey !== 'your-supabase-anon-key') ? supabaseAnonKey : 'placeholder-key',
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {

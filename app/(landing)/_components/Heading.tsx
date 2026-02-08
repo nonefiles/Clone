@@ -12,10 +12,10 @@ export const Heading = () => {
     <div className="max-w-3xl space-y-4">
       <h1 className="text-3xl font-bold sm:text-5xl md:text-5xl">
         Your Ideas💡, Documents📕, & Plans🚀. Welcome to{" "}
-        <span className="underline">Zotion</span>
+        <span className="underline">none-notion</span>
       </h1>
       <h2 className="text-base font-medium sm:text-xl">
-        Zotion is the connected workspace where <br /> better, faster work
+        none-notion is the connected workspace where <br /> better, faster work
         happens.
       </h2>
       {loading && (
@@ -25,8 +25,8 @@ export const Heading = () => {
       )}
       {user && !loading && (
         <Button asChild>
-          <Link href="/documents">
-            Enter Zotion
+          <Link href="/dashboard">
+            Enter none-notion
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
@@ -34,7 +34,7 @@ export const Heading = () => {
       {!user && !loading && (
         <Button asChild>
           <Link href="/register">
-            Get Zotion free
+            Get none-notion free
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>

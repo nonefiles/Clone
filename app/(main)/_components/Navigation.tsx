@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ElementRef, useEffect, useRef, useState } from "react";
+import React, { ElementRef, useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -13,7 +13,10 @@ import { UserItem } from "./UserItem";
 
 import { toast } from "sonner";
 import {
+  Archive,
   ChevronsLeft,
+  Code2,
+  Layout,
   LayoutDashboard,
   MenuIcon,
   Plus,
@@ -39,7 +42,7 @@ const Navigation = () => {
   const pathname = usePathname();
   const params = useParams();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { user } = useUser();
 
   const isResizingRef = useRef(false);
@@ -48,55 +51,19 @@ const Navigation = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(isMobile);
 
-  useEffect(() => {
-    if (isMobile) {
-      collapse();
-    } else {
-      resetWidth();
-    }
-  }, [isMobile]);
-
-  useEffect(() => {
-    if (isMobile) {
-      collapse();
-    }
-  }, [pathname, isMobile]);
-
-  const handleMouseDown = (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-  ) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    isResizingRef.current = true;
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isResizingRef.current) return;
-    let newWidth = e.clientX;
-
-    if (newWidth < 240) newWidth = 240;
-    if (newWidth > 480) newWidth = 480;
-
+  const collapse = useCallback(() => {
     if (sidebarRef.current && navbarRef.current) {
-      sidebarRef.current.style.width = `${newWidth}px`;
-      navbarRef.current.style.setProperty("left", `${newWidth}px`);
-      navbarRef.current.style.setProperty(
-        "width",
-        `calc(100% - ${newWidth}px)`,
-      );
+      setIsCollapsed(true);
+      setIsResetting(true);
+
+      sidebarRef.current.style.width = "0";
+      navbarRef.current.style.setProperty("width", "100%");
+      navbarRef.current.style.setProperty("left", "0");
+      setTimeout(() => setIsResetting(false), 300);
     }
-  };
+  }, []);
 
-  const handleMouseUp = () => {
-    isResizingRef.current = false;
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
-  };
-
-  const resetWidth = () => {
+  const resetWidth = useCallback(() => {
     if (sidebarRef.current && navbarRef.current) {
       setIsCollapsed(false);
       setIsResetting(true);
@@ -110,19 +77,53 @@ const Navigation = () => {
       navbarRef.current.style.setProperty("left", isMobile ? "100%" : "240px");
       setTimeout(() => setIsResetting(false), 300);
     }
+  }, [isMobile]);
+
+  const handleMouseDown = (
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    isResizingRef.current = true;
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
   };
 
-  const collapse = () => {
-    if (sidebarRef.current && navbarRef.current) {
-      setIsCollapsed(true);
-      setIsResetting(true);
+  const handleMouseMove = (event: MouseEvent) => {
+    if (!isResizingRef.current) return;
+    let newWidth = event.clientX;
 
-      sidebarRef.current.style.width = "0";
-      navbarRef.current.style.setProperty("width", "100%");
-      navbarRef.current.style.setProperty("left", "0");
-      setTimeout(() => setIsResetting(false), 300);
+    if (newWidth < 240) newWidth = 240;
+    if (newWidth > 480) newWidth = 480;
+
+    if (sidebarRef.current && navbarRef.current) {
+      sidebarRef.current.style.width = `${newWidth}px`;
+      navbarRef.current.style.setProperty("left", `${newWidth}px`);
+      navbarRef.current.style.setProperty("width", `calc(100% - ${newWidth}px)`);
     }
   };
+
+  const handleMouseUp = () => {
+    isResizingRef.current = false;
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+  };
+
+
+  useEffect(() => {
+    if (isMobile) {
+      collapse();
+    } else {
+      resetWidth();
+    }
+  }, [isMobile, collapse, resetWidth]);
+
+  useEffect(() => {
+    if (isMobile) {
+      collapse();
+    }
+  }, [pathname, isMobile, collapse]);
 
   const handleCreate = async () => {
     if (!user) return;
@@ -137,7 +138,7 @@ const Navigation = () => {
       }).select().single();
 
       if (error) throw error;
-      router.push(`/documents/${data.id}`);
+      router.push(`/dashboard`);
       return data.id;
     })();
 
@@ -153,7 +154,7 @@ const Navigation = () => {
       <aside
         ref={sidebarRef}
         className={cn(
-          "group/sidebar relative z-[300] flex h-full w-60 flex-col overflow-y-auto overflow-x-hidden bg-secondary",
+          "group/sidebar relative z-[300] flex h-full w-60 flex-col overflow-y-auto overflow-x-hidden bg-secondary print:hidden",
           isResetting && "transition-all duration-300 ease-in-out",
           isMobile && "w-0",
         )}
@@ -172,15 +173,20 @@ const Navigation = () => {
           <UserItem />
           <Item label="Search" icon={Search} isSearch onClick={search.onOpen} />
           <Item label="Settings" icon={Settings} onClick={settings.onOpen} />
-          <Item label="Kanban Board" icon={LayoutDashboard} onClick={() => router.push("/board")} />
+          <Item label="Dashboard" icon={LayoutDashboard} onClick={() => router.push("/dashboard")} />
+          <Item label="Board" icon={Layout} onClick={() => router.push("/board")} />
+          <Item label="Online IDE" icon={Code2} onClick={() => router.push("/ide")} />
+          <Item label="Archive" icon={Archive} onClick={() => router.push("/archive")} />
           <Item onClick={handleCreate} label="New page" icon={PlusCircle} />
         </div>
         <div className="mt-4">
           <DocumentList />
           <Item onClick={handleCreate} icon={Plus} label="Add a page" />
           <Popover>
-            <PopoverTrigger className="mt-4 w-full">
-              <Item label="Trash" icon={Trash} />
+            <PopoverTrigger asChild className="mt-4 w-full">
+              <div>
+                <Item label="Trash" icon={Trash} />
+              </div>
             </PopoverTrigger>
             <PopoverContent
               side={isMobile ? "bottom" : "right"}

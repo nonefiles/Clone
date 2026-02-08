@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, use, useEffect, useState } from "react";
+import { useMemo, use, useEffect, useState, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Document } from "@/types";
+import debounce from "lodash/debounce";
+import { useRouter } from "next/navigation";
 
 import { Cover } from "@/components/cover";
 import { Toolbar } from "@/components/toolbar";
@@ -17,6 +19,7 @@ interface DocumentIdPageProps {
 
 const DocumentIdPage = ({ params }: DocumentIdPageProps) => {
   const { documentId } = use(params);
+  const router = useRouter();
   const supabase = createClient();
   const [document, setDocument] = useState<Document | null | undefined>(undefined);
 
@@ -28,7 +31,7 @@ const DocumentIdPage = ({ params }: DocumentIdPageProps) => {
         .eq("id", documentId)
         .single();
 
-      if (error) {
+      if (error || !data) {
         setDocument(null);
       } else {
         setDocument(data as Document);
@@ -38,16 +41,37 @@ const DocumentIdPage = ({ params }: DocumentIdPageProps) => {
     fetchDocument();
   }, [supabase, documentId]);
 
+  // Döküman bulunamazsa yönlendirme mantığı
+  useEffect(() => {
+    if (document === null) {
+      router.push("/documents");
+    }
+  }, [document, router]);
+
   const Editor = useMemo(
     () => dynamic(() => import("@/components/editor"), { ssr: false }),
     [],
   );
 
-  const onChange = async (content: string) => {
-    await supabase
-      .from("documents")
-      .update({ content })
-      .eq("id", documentId);
+  const debouncedUpdate = useMemo(
+    () =>
+      debounce(async (content: string) => {
+        await supabase
+          .from("documents")
+          .update({ content })
+          .eq("id", documentId);
+      }, 1000),
+    [supabase, documentId]
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedUpdate.cancel();
+    };
+  }, [debouncedUpdate]);
+
+  const onChange = (content: string) => {
+    debouncedUpdate(content);
   };
 
   if (document === undefined) {
@@ -71,7 +95,7 @@ const DocumentIdPage = ({ params }: DocumentIdPageProps) => {
   }
 
   return (
-    <div className="pb-40">
+    <div className="pb-40 print:block print:overflow-visible" id="printable-content">
       <Cover url={document.cover_image || undefined} />
       <div className="mx-auto md:w-[90%]">
         <Toolbar initialData={document} />

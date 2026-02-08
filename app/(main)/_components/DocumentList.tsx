@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Document } from "@/types";
@@ -97,10 +97,24 @@ export const DocumentList = ({
 }: DocumentListProps) => {
   const params = useParams();
   const router = useRouter();
+  
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [isDragging, setIsDragging] = useState(false);
-  const { documents, isLoading } = useDocuments(parentDocumentId);
   const [orderedDocuments, setOrderedDocuments] = useState<Document[]>([]);
+
+  const { documents, isLoading, connectionStatus } = useDocuments(parentDocumentId);
+
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8,
+    },
+  });
+  
+  const keyboardSensor = useSensor(KeyboardSensor, {
+    coordinateGetter: sortableKeyboardCoordinates,
+  });
+
+  const sensors = useSensors(pointerSensor, keyboardSensor);
 
   useEffect(() => {
     if (isDragging) {
@@ -118,16 +132,9 @@ export const DocumentList = ({
     }));
   };
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
+  const onRedirect = (documentId: string) => {
+    router.push(`/documents/${documentId}`);
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     setIsDragging(false);
@@ -144,14 +151,8 @@ export const DocumentList = ({
 
       if (oldIndex !== -1 && newIndex !== -1) {
         setOrderedDocuments((prev) => arrayMove(prev, oldIndex, newIndex));
-        // Supabase reorder implementation can be added here if needed
-        // For now, we just update the local state
       }
     }
-  };
-
-  const onRedirect = (documentId: string) => {
-    router.push(`/documents/${documentId}`);
   };
 
   if (isLoading) {
@@ -169,7 +170,24 @@ export const DocumentList = ({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
+      {level === 0 && (
+        <div className="absolute top-0 right-2 flex items-center gap-x-1 opacity-50 hover:opacity-100 transition">
+          <div className={cn(
+            "h-2 w-2 rounded-full animate-pulse",
+            connectionStatus === "CONNECTED" && "bg-emerald-500",
+            connectionStatus === "CONNECTING" && "bg-amber-500",
+            connectionStatus === "ERROR" && "bg-rose-500",
+            connectionStatus === "DISCONNECTED" && "bg-slate-500",
+          )} />
+          <span className="text-[10px] text-muted-foreground uppercase font-semibold">
+            {connectionStatus === "CONNECTED" && "Canlı"}
+            {connectionStatus === "CONNECTING" && "Bağlanıyor"}
+            {connectionStatus === "ERROR" && "Hata"}
+            {connectionStatus === "DISCONNECTED" && "Bağlantı Kesildi"}
+          </span>
+        </div>
+      )}
       {orderedDocuments.length === 0 && level !== 0 && (
         <p
           style={{ paddingLeft: level ? `${level * 12 + 25}px` : undefined }}
@@ -198,7 +216,7 @@ export const DocumentList = ({
               onExpand={onExpand}
               expanded={expanded[document.id]}
               onRedirect={onRedirect}
-              activeId={params.documentId}
+              activeId={params.documentId as string}
             />
           ))}
         </SortableContext>

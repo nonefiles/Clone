@@ -3,17 +3,65 @@
 import {
   BlockNoteSchema,
   defaultBlockSpecs,
+  PartialBlock,
+  defaultInlineContentSpecs,
+  defaultStyleSpecs,
 } from "@blocknote/core";
-import { 
-  useCreateBlockNote, 
-  createReactBlockSpec, 
+import {
+  useCreateBlockNote,
+  createReactBlockSpec,
+  SuggestionMenuController,
   getDefaultReactSlashMenuItems,
 } from "@blocknote/react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useTheme } from "next-themes";
 import { createClient } from "@/utils/supabase/client";
 import { Mermaid } from "./mermaid";
-import { useMemo } from "react";
+import "@blocknote/core/fonts/inter.css";
+import "@blocknote/mantine/style.css";
+
+const mermaidBlockSpec = createReactBlockSpec(
+  {
+    type: "mermaid",
+    propSchema: {
+      code: {
+        default: "graph TD; A-->B;",
+      },
+    },
+    content: "none",
+  },
+  {
+    render: (props) => {
+      return (
+        <div className="flex flex-col w-full p-4 border rounded-lg bg-slate-50 dark:bg-slate-900 group">
+          <Mermaid content={props.block.props.code} />
+          <div className="hidden group-hover:flex mt-2 w-full">
+            <textarea
+              className="w-full p-2 text-xs font-mono border rounded bg-white dark:bg-slate-800 focus:ring-1 focus:ring-sky-500 outline-none"
+              value={props.block.props.code}
+              onChange={(e) =>
+                props.editor.updateBlock(props.block, {
+                  props: { ...props.block.props, code: e.target.value },
+                })
+              }
+              rows={3}
+            />
+          </div>
+        </div>
+      );
+    },
+  }
+);
+
+const schema = BlockNoteSchema.create({
+  blockSpecs: {
+    ...defaultBlockSpecs,
+    mermaid: mermaidBlockSpec(),
+  },
+  inlineContentSpecs: defaultInlineContentSpecs,
+  styleSpecs: defaultStyleSpecs,
+});
 
 interface EditorProps {
   onChange: (value: string) => void;
@@ -21,56 +69,28 @@ interface EditorProps {
   editable?: boolean;
 }
 
-const Editor = ({ onChange, initialContent, editable }: EditorProps) => {
-  const { resolvedTheme } = useTheme();
-  const supabase = createClient();
+const Editor = (props: EditorProps) => {
+  const [isMounted, setIsMounted] = useState(false);
 
-  const schema = useMemo(() => {
-    const MermaidBlock = createReactBlockSpec(
-      {
-        type: "mermaid",
-        propSchema: {
-          // DÜZELTME: 'content' yerine 'code' kullanıyoruz
-          code: {
-            default: "graph TD; A-->B;",
-          },
-        },
-        content: "none",
-      },
-      {
-        render: (props) => {
-          return (
-            <div className="flex flex-col gap-y-2">
-              {props.editor.isEditable && (
-                <textarea
-                  className="w-full p-2 text-xs font-mono bg-secondary rounded-md resize-none"
-                  value={props.block.props.code} // DÜZELTME: props.content -> props.code
-                  onChange={(e) =>
-                    props.editor.updateBlock(props.block, {
-                      props: { ...props.block.props, code: e.target.value }, // DÜZELTME
-                    })
-                  }
-                  rows={3}
-                />
-              )}
-              {/* Mermaid bileşeni muhtemelen 'content' veya 'chart' prop'u bekliyordur. 
-                  Eğer Mermaid bileşeniniz 'content' prop'u alıyorsa, ona 'code' değerini gönderiyoruz. */}
-              <Mermaid content={props.block.props.code} />
-            </div>
-          );
-        },
-      }
-    );
-
-    return BlockNoteSchema.create({
-      blockSpecs: {
-        ...defaultBlockSpecs,
-        mermaid: MermaidBlock,
-      },
-    } as any);
+  useEffect(() => {
+    setIsMounted(true);
   }, []);
 
-  const handleUpload = async (file: File) => {
+  if (!isMounted) {
+    return null;
+  }
+
+  return <EditorContent {...props} />;
+};
+
+interface EditorContentProps extends EditorProps {}
+
+const EditorContent = ({ onChange, initialContent, editable }: EditorContentProps) => {
+  const { resolvedTheme } = useTheme();
+  const supabase = createClient();
+  const isFirstRender = useRef(true);
+
+  const handleUpload = useCallback(async (file: File) => {
     const isImage = file.type.startsWith('image/');
     const bucket = isImage ? 'images' : 'files';
     const fileExt = file.name.split('.').pop();
@@ -90,31 +110,54 @@ const Editor = ({ onChange, initialContent, editable }: EditorProps) => {
       .getPublicUrl(data.path);
 
     return publicUrl;
-  };
+  }, [supabase.storage]);
 
   const editor = useCreateBlockNote({
+    schema,
     initialContent: initialContent
-      ? (JSON.parse(initialContent))
+      ? (() => {
+          try {
+            return JSON.parse(initialContent);
+          } catch (e) {
+            console.error("Initial content parse error:", e);
+            return undefined;
+          }
+        })()
       : undefined,
     uploadFile: handleUpload,
-    schema,
   });
 
-  const handleEditorChange = () => {
-    onChange(JSON.stringify(editor.document, null, 2));
-  };
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
 
-  const insertMermaid = (editor: any) => {
-    editor.insertBlocks(
-      [
-        {
-          type: "mermaid",
-        },
-      ],
-      editor.getTextCursorPosition().block,
-      "after"
-    );
-  };
+    if (editor && initialContent) {
+      try {
+        const parsedContent = JSON.parse(initialContent);
+        const currentContent = editor.document;
+
+        // Optimize edilmiş içerik karşılaştırma mantığı
+        // Eğer içerik yapısal olarak tamamen aynıysa replaceBlocks çağrılmaz, böylece focus korunur.
+        if (JSON.stringify(currentContent) !== JSON.stringify(parsedContent)) {
+          editor.replaceBlocks(editor.document, parsedContent);
+        }
+      } catch (error) {
+        console.error("Editor content sync error:", error);
+      }
+    }
+  }, [initialContent, editor]);
+
+  const handleEditorChange = useCallback(() => {
+    if (editor) {
+      onChange(JSON.stringify(editor.document, null, 2));
+    }
+  }, [editor, onChange]);
+
+  if (!editor) {
+    return null;
+  }
 
   return (
     <div className="relative group">
@@ -123,17 +166,43 @@ const Editor = ({ onChange, initialContent, editable }: EditorProps) => {
         editor={editor}
         theme={resolvedTheme === "dark" ? "dark" : "light"}
         onChange={handleEditorChange}
-        slashMenuItems={[
-          ...getDefaultReactSlashMenuItems(editor),
-          {
-            name: "Mermaid",
-            aliases: ["mermaid", "diagram", "chart"],
-            group: "Advanced",
-            icon: <div className="font-bold text-xs">M</div>,
-            onItemClick: () => insertMermaid(editor),
-          },
-        ]}
-      />
+        slashMenu={false}
+      >
+        <SuggestionMenuController
+          triggerCharacter={"/"}
+          getItems={async (query) => {
+            const items = [
+              ...getDefaultReactSlashMenuItems(editor),
+              {
+                title: "Mermaid",
+                onItemClick: () => {
+                  editor.insertBlocks(
+                    [
+                      {
+                        type: "mermaid",
+                        props: {
+                          code: "graph TD; A-->B;",
+                        },
+                      },
+                    ],
+                    editor.getTextCursorPosition().block,
+                    "after"
+                  );
+                },
+                aliases: ["mermaid", "diagram", "chart"],
+                group: "Advanced",
+                icon: <div className="font-bold text-xs">M</div>,
+              },
+            ];
+            return items.filter((item) =>
+              item.title.toLowerCase().includes(query.toLowerCase()) ||
+              item.aliases?.some((alias: string) =>
+                alias.toLowerCase().includes(query.toLowerCase())
+              )
+            );
+          }}
+        />
+      </BlockNoteView>
     </div>
   );
 };

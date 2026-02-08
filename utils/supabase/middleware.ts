@@ -6,23 +6,10 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  console.log('Middleware: Checking Supabase URL...', { supabaseUrl: supabaseUrl?.substring(0, 10) + '...' });
-
-  const isUrl = (url: string | undefined) => {
-    if (!url) return false;
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  if (!isUrl(supabaseUrl) || !supabaseAnonKey || supabaseUrl === 'your-supabase-url') {
-    console.log('Middleware: Invalid Supabase URL or Key. Skipping session update.');
+  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'your-supabase-url') {
     return supabaseResponse
   }
 
@@ -56,15 +43,26 @@ export async function updateSession(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (
-      !user &&
-      !request.nextUrl.pathname.startsWith('/login') &&
-      !request.nextUrl.pathname.startsWith('/auth') &&
-      request.nextUrl.pathname.startsWith('/documents')
-    ) {
-      // no user, potentially respond by redirecting the user to the login page
+    const isProtectedRoute = 
+      request.nextUrl.pathname.startsWith('/dashboard') ||
+      request.nextUrl.pathname.startsWith('/board') ||
+      request.nextUrl.pathname.startsWith('/ide') ||
+      request.nextUrl.pathname.startsWith('/archive') ||
+      request.nextUrl.pathname.startsWith('/documents');
+
+    const isAuthRoute = 
+      request.nextUrl.pathname.startsWith('/login') ||
+      request.nextUrl.pathname.startsWith('/register');
+
+    if (!user && isProtectedRoute) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+
+    if (user && isAuthRoute) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
   } catch (error) {

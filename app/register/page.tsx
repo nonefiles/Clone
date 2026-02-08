@@ -37,7 +37,7 @@ export default function RegisterPage() {
           }
         } else {
         toast.success('Kayıt başarılı! Giriş yapılıyor...')
-        router.push('/documents')
+        router.push('/dashboard')
         router.refresh()
       }
     } catch (err: any) {

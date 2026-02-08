@@ -9,7 +9,7 @@ import { ModalProvider } from "@/components/providers/modal-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Zotion",
+  title: "none-notion",
   description:
     "The seamless platform where creative and productive work happens.",
   icons: {
@@ -25,6 +25,8 @@ export const metadata: Metadata = {
         href: "/logo-dark.svg",
       },
     ],
+    shortcut: ["/logo.svg"],
+    apple: ["/logo.svg"],
   },
 };
 
@@ -41,7 +43,7 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
-          storageKey="zotion-theme-2"
+          storageKey="none-notion-theme"
         >
           <Toaster position="bottom-center" />
           <ModalProvider />

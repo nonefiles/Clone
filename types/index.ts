@@ -21,6 +21,14 @@ export interface Database {
   }
 }
 
+export interface KanbanColumn { 
+  id: string; 
+  user_id: string; 
+  title: string; 
+  position: number; 
+  created_at: string; 
+}
+
 export interface Doc {
   id: string;
   user_id: string;
@@ -31,8 +39,24 @@ export interface Doc {
   content?: string;
   cover_image?: string;
   icon?: string;
+  category?: string | null;
+  description?: string | null;
   created_at: string;
-  status?: "TODO" | "IN_PROGRESS" | "DONE";
+  status: string | null;
+}
+
+export interface FileArchiveItem {
+  name: string;
+  id: string;
+  updated_at: string;
+  created_at: string;
+  last_accessed_at: string;
+  metadata: {
+    size: number;
+    mimetype: string;
+    cacheControl: string;
+    httpStatusCode: number;
+  };
 }
 
 export type Document = Doc;

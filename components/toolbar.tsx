@@ -44,12 +44,16 @@ export const Toolbar = ({ initialData, preview }: ToolbarProps) => {
     if (value === initialData.title) return;
 
     const timer = setTimeout(async () => {
-      await supabase
+      const { error } = await supabase
         .from("documents")
         .update({
           title: value || "Untitled",
         })
         .eq("id", initialData.id);
+      
+      if (!error) {
+        // Force refresh or optimistic update could be handled here if needed
+      }
     }, 400);
 
     return () => clearTimeout(timer);

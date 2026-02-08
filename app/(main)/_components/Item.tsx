@@ -62,7 +62,7 @@ export const Item = ({
         .eq("id", id);
       
       if (error) throw error;
-      router.push("/documents");
+      router.push("/dashboard");
     })();
 
     toast.promise(promise, {

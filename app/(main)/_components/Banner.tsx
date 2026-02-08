@@ -22,7 +22,7 @@ export const Banner = ({ documentId }: BannerProps) => {
         .eq("id", documentId);
       
       if (error) throw error;
-      router.push("/documents");
+      router.push("/dashboard");
     })();
 
     toast.promise(promise, {
@@ -50,7 +50,7 @@ export const Banner = ({ documentId }: BannerProps) => {
   };
 
   return (
-    <div className="flex w-full items-center justify-center gap-x-2 bg-rose-500 p-2 text-center text-sm text-white">
+    <div className="flex w-full items-center justify-center gap-x-2 bg-rose-500 p-2 text-center text-sm text-white print:hidden">
       <p>
         This page is in the <span className="font-bold">Trash.</span>
       </p>
